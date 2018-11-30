@@ -2,30 +2,55 @@ buildscript {
   repositories {
     mavenCentral()
     jcenter()
+    google()
   }
 
   dependencies {
     classpath 'org.gradle.api.plugins:gradle-nexus-plugin:0.7'
-    classpath 'com.android.tools.build:gradle:1.3.1'
+    classpath 'com.android.tools.build:gradle:3.2.0'
     classpath 'org.aspectj:aspectjtools:1.8.6'
-    classpath 'com.github.dcendents:android-maven-gradle-plugin:1.3'
+    classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
   }
 }
 
 allprojects {
   repositories {
     mavenCentral()
+    google()
+    jcenter()
+    maven {
+      credentials {
+        username nexusUsername
+        password nexusPassword
+      }
+      url {
+        getNexusBasePath() + 'snapshots/'
+      }
+    }
+
+    maven {
+      credentials {
+        username nexusUsername
+        password nexusPassword
+      }
+      url {
+        getNexusBasePath() + 'releases/'
+      }
+    }
   }
 
   group = GROUP
   version = VERSION_NAME
 
   apply plugin: 'maven'
+  apply plugin: 'maven-publish'
+
+
 }
 
 ext {
-  compileSdkVersion = 23
-  buildToolsVersion = '23.0.3'
+  compileSdkVersion = 28
+  buildToolsVersion = '28.0.3'
 }
 
 task cleanExample(type: Exec) {
@@ -38,6 +63,16 @@ task assembleExample(type: Exec) {
   executable = '../gradlew'
   workingDir = project.file('hugo-example')
   args = [ 'assemble' ]
+}
+
+def getNexusBasePath() {
+  def nexusPort = ':8443'
+  if (project.hasProperty('lns.nexus.ssl.port')) {
+    nexusPort = ':' + property('lns.nexus.ssl.port')
+  }
+
+  def repoBasePath = 'https://maven.tomtom.com' + nexusPort + '/nexus/content/repositories/'
+  return repoBasePath
 }
 
 task installExample(type: Exec) {
